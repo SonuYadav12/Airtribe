@@ -2,7 +2,6 @@
     <div class="h-screen bg-gradient-to-tr from-black  to-gray-500 overflow-auto relative">
       <div class="flex items-center justify-between bg-white text-white p-4">
         <img width="200" src="/download.jpg" alt="Trello Logo" class="mr-3">
-        <h1 class="text-4xl">Trello</h1>
         <button @click="handleSaveChanges" class="btn-save-changes">Save Changes</button>
       </div>
       <div class="container mx-auto px-4">
