@@ -1,23 +1,20 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import type { Column } from "../types/index";
+import { ref, computed, nextTick } from "vue";
+import type { Column, Task } from "../types/index";
 import { nanoid } from "nanoid";
-import draggable from "vuedraggable"
+import draggable from "vuedraggable";
 import { useTrelloStore } from '../stores/trello';
+import { useKeyModifier } from '@vueuse/core';
+
 const trelloStore = useTrelloStore();
 trelloStore.getItems();
 
-import { useKeyModifier } from '@vueuse/core'
-
-const shift = useKeyModifier('Shift', { initial: false })
-
-console.log(shift.value)
-
+const shift = useKeyModifier('Shift', { initial: false });
 
 const remove = (idx) => {
-  console.log("Columna ID: ", idx)
+  console.log("Column ID: ", idx);
   trelloStore.columns = trelloStore.columns.filter((c) => c.id !== idx);
-}
+};
 
 function createColumn() {
   const column: Column = {
@@ -32,27 +29,38 @@ function createColumn() {
         ".column:last-of-type .title-input"
       ) as HTMLInputElement
     ).focus();
-    console.log("Columnas: ", trelloStore.columns)
+    console.log("Columns: ", trelloStore.columns);
   });
 }
+
+const countTasks = computed(() => {
+  const taskCounts = {};
+  trelloStore.columns.forEach((column) => {
+    taskCounts[column.id] = column.tasks.length;
+  });
+  return taskCounts;
+});
 </script>
 
+
 <template>
-  <div class="flex-wrap flex items-start overflow-x-auto gap-4">
+  <div class="flex flex-wrap items-start overflow-x-auto gap-4 p-4">
+    
     <draggable
       v-model="trelloStore.columns"
       group="columns"
       :animation="150"
       handle=".drag-handle"
       item-key="id"
-      class="flex-wrap flex gap-4 items-start"
+      class="flex flex-wrap gap-4"
     >
-      <template #item="{ element: column }:  { element: Column }">
-        <div class="column bg-gray-200 p-5 rounded min-w-[250px]">
-          <header class="justify-between flex font-bold mb-4 ">
-            <drag-handle />
+      <template #item="{ element: column }: { element: Column }">
+        <div class="w-full md:w-72 bg-gray-200 p-4 rounded-md shadow-md">
+         
+          <header class="flex items-center justify-between mb-4 bg-blue-500 rounded-t-md py-2 px-4">
+            <drag-handle class="cursor-move mr-2 text-white"></drag-handle>
             <input
-              class="title-input bg-transparent focus:bg-white rounded px-1 w-4/5"
+              class="title-input bg-transparent focus:bg-white rounded px-2 py-1 w-3/4 md:w-full"
               @keydown.enter="($event.target as HTMLInputElement).blur()"
               @keydown.escape="
                 column.title === ''
@@ -61,33 +69,43 @@ function createColumn() {
               "
               type="text"
               v-model="column.title"
+              placeholder="Enter column title"
             />
-            <Remove @click="remove(column.id)"/>
+            <Remove @click="remove(column.id)" class="cursor-pointer text-white"></Remove>
           </header>
+          
           <draggable
             v-model="column.tasks"
             group="tasks"
             :animation="150"
-            item-key="id">
+            item-key="id"
+          >
             <template #item="{ element: task }: { element: Task }">
-              <TrelloBoardTask
-              :task="task"
-              @delete="column.tasks = column.tasks.filter((t) => t.id !== $event)" 
-              />
-          </template>
-          </draggable>   
-          <footer>
-            <NewTask @add="column.tasks.push($event)" />
+              <div class="bg-white rounded-md p-2 mb-2">
+                <TrelloBoardTask
+                  :task="task"
+                  @delete="column.tasks = column.tasks.filter((t) => t.id !== $event)"
+                />
+              </div>
+            </template>
+          </draggable>
+         
+          <footer class="bg-gray-500 rounded-b-md py-2 px-4">
+            <NewTask class="cursor-pointer text-white" @add="column.tasks.push($event)" />
           </footer>
+         
+          <div class="text-sm text-gray-700 mt-2">Tasks: {{ countTasks[column.id] }}</div>
         </div>
       </template>
     </draggable>
+    
+    
     <button
       @click="createColumn"
-      class="bg-gray-200 whitespace-nowrap p-2 rounded opacity-50"
+      class="bg-green-500 hover:bg-green-600 text-white whitespace-nowrap p-2 rounded shadow-md"
     >
-      +New Column
+      + New Task
     </button>
     
-  </div>  
-</template> 
+  </div>
+</template>
