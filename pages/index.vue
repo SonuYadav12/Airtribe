@@ -81,7 +81,7 @@ const countTasks = computed(() => {
             item-key="id"
           >
             <template #item="{ element: task }: { element: Task }">
-              <div class="bg-white cursor-pointer rounded-md p-2 mb-2">
+              <div class="bg-white  rounded-md p-2 mb-2">
                 <TrelloBoardTask
                   :task="task"
                   @delete="column.tasks = column.tasks.filter((t) => t.id !== $event)"
