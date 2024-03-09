@@ -1,48 +1,3 @@
-<script setup lang="ts">
-import { ref, computed, nextTick } from "vue";
-import type { Column, Task } from "../types/index";
-import { nanoid } from "nanoid";
-import draggable from "vuedraggable";
-import { useTrelloStore } from '../stores/trello';
-import { useKeyModifier } from '@vueuse/core';
-
-const trelloStore = useTrelloStore();
-trelloStore.getItems();
-
-const shift = useKeyModifier('Shift', { initial: false });
-
-const remove = (idx) => {
-  console.log("Column ID: ", idx);
-  trelloStore.columns = trelloStore.columns.filter((c) => c.id !== idx);
-};
-
-function createColumn() {
-  const column: Column = {
-    id: nanoid(),
-    title: "",
-    tasks: [],
-  };
-  trelloStore.columns.push(column);
-  nextTick(() => {
-    (
-      document.querySelector(
-        ".column:last-of-type .title-input"
-      ) as HTMLInputElement
-    ).focus();
-    console.log("Columns: ", trelloStore.columns);
-  });
-}
-
-const countTasks = computed(() => {
-  const taskCounts = {};
-  trelloStore.columns.forEach((column) => {
-    taskCounts[column.id] = column.tasks.length;
-  });
-  return taskCounts;
-});
-</script>
-
-
 <template>
   <div class="flex flex-wrap items-start overflow-x-auto gap-4 p-4">
     
@@ -82,10 +37,10 @@ const countTasks = computed(() => {
           >
             <template #item="{ element: task }: { element: Task }">
               <div class="bg-white  rounded-md p-2 mb-2">
-                <TrelloBoardTask
-                  :task="task"
-                  @delete="column.tasks = column.tasks.filter((t) => t.id !== $event)"
-                />
+                <div class="flex justify-between items-center">
+                  <div @click="editTaskTitle(column, task)" class="cursor-pointer">{{ task.title }}</div>
+                  <button @click="deleteTask(column, task.id)" class="text-red-500 cursor-pointer">Delete</button>
+                </div>
               </div>
             </template>
           </draggable>
@@ -99,13 +54,96 @@ const countTasks = computed(() => {
       </template>
     </draggable>
     
-    
     <button
       @click="createColumn"
-      class="bg-green-500 hover:bg-green-600 text-white whitespace-nowrap p-2 rounded shadow-md"
+      class="bg-green-500 hover:bg-green-600 text-white whitespace-nowrap p-2 rounded shadow-md cursor-pointer"
     >
       + New Task
     </button>
     
+  
+    <div v-if="editTaskModal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+      <div class="bg-white p-4 rounded-md shadow-md">
+        <input v-model="editedTaskTitle" @keydown.enter="saveTaskTitle" @keydown.escape="cancelEditTask" type="text" class="border border-gray-300 p-2 w-full" placeholder="Enter task title">
+        <div class="flex justify-end mt-2">
+          <button @click="saveTaskTitle" class="bg-blue-500 text-white px-4 py-2 mr-2 rounded-md cursor-pointer">Save</button>
+          <button @click="cancelEditTask" class="bg-gray-300 px-4 py-2 rounded-md cursor-pointer">Cancel</button>
+        </div>
+      </div>
+    </div>
+    
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref, computed, nextTick } from "vue";
+import type { Column, Task } from "../types/index";
+import { nanoid } from "nanoid";
+import draggable from "vuedraggable";
+import { useTrelloStore } from '../stores/trello';
+import { useKeyModifier } from '@vueuse/core';
+
+const trelloStore = useTrelloStore();
+trelloStore.getItems();
+
+const shift = useKeyModifier('Shift', { initial: false });
+
+const editTaskModal = ref(false);
+const editedTaskTitle = ref('');
+const editedTask = ref<Task | null>(null);
+
+const remove = (idx) => {
+  console.log("Column ID: ", idx);
+  trelloStore.columns = trelloStore.columns.filter((c) => c.id !== idx);
+};
+
+function createColumn() {
+  const column: Column = {
+    id: nanoid(),
+    title: "",
+    tasks: [],
+  };
+  trelloStore.columns.push(column);
+  nextTick(() => {
+    (
+      document.querySelector(
+        ".column:last-of-type .title-input"
+      ) as HTMLInputElement
+    ).focus();
+    console.log("Columns: ", trelloStore.columns);
+  });
+}
+
+const countTasks = computed(() => {
+  const taskCounts = {};
+  trelloStore.columns.forEach((column) => {
+    taskCounts[column.id] = column.tasks.length;
+  });
+  return taskCounts;
+});
+
+const editTaskTitle = (column: Column, task: Task) => {
+  editedTask.value = task;
+  editedTaskTitle.value = task.title;
+  editTaskModal.value = true;
+};
+
+const saveTaskTitle = () => {
+  if (editedTask.value) {
+    editedTask.value.title = editedTaskTitle.value;
+    editTaskModal.value = false;
+    editedTask.value = null;
+    editedTaskTitle.value = '';
+  }
+};
+
+const cancelEditTask = () => {
+  editTaskModal.value = false;
+  editedTask.value = null;
+  editedTaskTitle.value = '';
+};
+
+const deleteTask = (column: Column, taskId: string) => {
+  column.tasks = column.tasks.filter((task) => task.id !== taskId);
+};
+</script>
