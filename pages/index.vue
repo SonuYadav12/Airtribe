@@ -71,7 +71,7 @@ const countTasks = computed(() => {
               v-model="column.title"
               placeholder="Enter column title"
             />
-            <Remove @click="remove(column.id)" class="cursor-pointer text-white"></Remove>
+            <Remove @click="remove(column.id)" class="cursor-pointer text-black"></Remove>
           </header>
           
           <draggable
@@ -91,7 +91,7 @@ const countTasks = computed(() => {
           </draggable>
          
           <footer class="bg-gray-500 rounded-b-md py-2 px-4">
-            <NewTask class="cursor-pointer text-white" @add="column.tasks.push($event)" />
+            <NewTask class="cursor-pointer text-black" @add="column.tasks.push($event)" />
           </footer>
          
           <div class="text-sm text-gray-700 mt-2">Tasks: {{ countTasks[column.id] }}</div>
